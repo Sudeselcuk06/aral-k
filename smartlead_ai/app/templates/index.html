@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ARALIK — A'dan B'ye zamanını yönet</title>
+  <style>
+    :root {
+      --zemin-1: #0b1f3a;
+      --zemin-2: #14456b;
+      --vurgu: #ffb703;
+      --metin: #f4f8fb;
+      --metin-soluk: #b9c9d8;
+      --cam: rgba(255, 255, 255, 0.12);
+      --cam-kenar: rgba(255, 255, 255, 0.28);
+      --hata: #ff8a8a;
+      --basari: #8be3a5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+      color: var(--metin);
+      background: linear-gradient(135deg, var(--zemin-1), var(--zemin-2));
+      background-attachment: fixed;
+    }
+    .sayfa { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+
+    /* Z deseni: sol üst logo -> sağ üst sohbet -> alt bölgede form */
+    .izgara {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 28px; letter-spacing: 3px; }
+    .logo-isaret { display: flex; align-items: center; gap: 4px; }
+    .nokta { width: 14px; height: 14px; border-radius: 50%; background: var(--vurgu); }
+    .nokta.b { background: var(--metin); }
+    .cizgi { width: 28px; height: 3px; background: var(--metin-soluk); border-radius: 2px; }
+    .slogan { margin: 28px 0 8px; font-size: 34px; line-height: 1.2; font-weight: 700; }
+    .alt-slogan { margin: 0; color: var(--metin-soluk); font-size: 17px; line-height: 1.6; }
+
+    .cam-kart {
+      background: var(--cam);
+      border: 1px solid var(--cam-kenar);
+      border-radius: 20px;
+      padding: 20px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    }
+    .kart-baslik { margin: 0 0 12px; font-size: 18px; font-weight: 700; }
+
+    #yanitAlani {
+      height: 280px;
+      overflow-y: auto;
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .balon { padding: 10px 14px; border-radius: 14px; max-width: 88%; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+    .balon.kullanici { align-self: flex-end; background: var(--vurgu); color: #1b1b1b; border-bottom-right-radius: 4px; }
+    .balon.asistan { align-self: flex-start; background: rgba(255, 255, 255, 0.16); border-bottom-left-radius: 4px; }
+    .balon.hata { align-self: flex-start; background: rgba(255, 90, 90, 0.2); color: var(--hata); }
+
+    .satir { display: flex; gap: 10px; margin-top: 12px; }
+    input, textarea {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--cam-kenar);
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--metin);
+      font: inherit;
+    }
+    input::placeholder, textarea::placeholder { color: var(--metin-soluk); }
+    input:focus, textarea:focus { outline: 2px solid var(--vurgu); outline-offset: 1px; }
+    button {
+      padding: 12px 22px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--vurgu);
+      color: #1b1b1b;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(1.08); }
+    button:disabled { opacity: 0.6; cursor: wait; }
+
+    .form-bolgesi { margin-top: 24px; }
+    .form-alanlar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-alanlar .tam { grid-column: 1 / -1; }
+    #durumMetni { margin: 12px 0 0; min-height: 22px; font-size: 15px; }
+    #durumMetni.basari { color: var(--basari); }
+    #durumMetni.hata { color: var(--hata); }
+
+    footer { margin-top: 28px; text-align: center; color: var(--metin-soluk); font-size: 13px; }
+
+    @media (max-width: 760px) {
+      .izgara, .form-alanlar { grid-template-columns: 1fr; }
+      .slogan { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sayfa">
+    <div class="izgara">
+      <!-- Sol üst: logo ve slogan (Z deseninin başlangıcı) -->
+      <header>
+        <div class="logo">
+          <span class="logo-isaret"><span class="nokta"></span><span class="cizgi"></span><span class="nokta b"></span></span>
+          ARALIK
+        </div>
+        <h1 class="slogan">A'dan B'ye giderken zamanını yönet.</h1>
+        <p class="alt-slogan">
+          Yolculuğunun arasında kalan boşluğu verimli kullan: kahve molası, ATM, eczane, şarj ve daha fazlası
+          için yapay zekâ asistanına sor.
+        </p>
+      </header>
+
+      <!-- Sağ üst: sohbet kartı (buzlu cam) -->
+      <section class="cam-kart" aria-label="Yapay zekâ sohbeti">
+        <h2 class="kart-baslik">ARALIK Asistanı</h2>
+        <div id="yanitAlani" aria-live="polite">
+          <div class="balon asistan">Merhaba! Nereden nereye gidiyorsun, ne kadar zamanın var? Yolda neye ihtiyacın olduğunu söyle, birlikte planlayalım.</div>
+        </div>
+        <div class="satir">
+          <input id="mesajGirisi" type="text" maxlength="1000" placeholder="Örn: Ankara'dan İstanbul'a 4 saatim var..." autocomplete="off">
+          <button id="sorBtn" type="button">Sor</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Alt bölge: iletişim formu (Z deseninin bitişi) -->
+    <section class="cam-kart form-bolgesi" aria-label="İletişim formu">
+      <h2 class="kart-baslik">Sana ulaşalım</h2>
+      <div class="form-alanlar">
+        <input id="isimGirisi" type="text" maxlength="100" placeholder="Adın soyadın" autocomplete="name">
+        <input id="telefonGirisi" type="tel" maxlength="20" placeholder="Telefon (05xx xxx xx xx)" autocomplete="tel">
+        <input id="notGirisi" class="tam" type="text" maxlength="1000" placeholder="Notun (isteğe bağlı)">
+      </div>
+      <div class="satir">
+        <button id="kaydetBtn" type="button">Kaydet</button>
+      </div>
+      <p id="durumMetni" role="status"></p>
+    </section>
+
+    <footer>ARALIK · Yapay zekâ destekli seyahat ve rotalama</footer>
+  </div>
+
+  <script>
+    // Sayfa backend ile aynı adresten sunulduğu için yollar göreceli (/api/...).
+    // Alan adları backend ile BİREBİR aynıdır: mesaj/cevap, isim/telefon.
+    const yanitAlani = document.getElementById("yanitAlani");
+    const mesajGirisi = document.getElementById("mesajGirisi");
+    const sorBtn = document.getElementById("sorBtn");
+    const isimGirisi = document.getElementById("isimGirisi");
+    const telefonGirisi = document.getElementById("telefonGirisi");
+    const notGirisi = document.getElementById("notGirisi");
+    const kaydetBtn = document.getElementById("kaydetBtn");
+    const durumMetni = document.getElementById("durumMetni");
+
+    // Konuşma geçmişi: sunucuya gönderilir ki yapay zekâ önceki mesajları hatırlasın.
+    const gecmis = [];
+
+    function balonEkle(metin, sinif) {
+      const balon = document.createElement("div");
+      balon.className = "balon " + sinif;
+      balon.textContent = metin; // textContent: dışarıdan gelen metin HTML olarak çalıştırılmaz (XSS koruması)
+      yanitAlani.appendChild(balon);
+      yanitAlani.scrollTop = yanitAlani.scrollHeight;
+      return balon;
+    }
+
+    async function sohbetGonder() {
+      const mesaj = mesajGirisi.value.trim();
+      if (!mesaj) return;
+
+      balonEkle(mesaj, "kullanici");
+      mesajGirisi.value = "";
+      sorBtn.disabled = true;
+      const bekleme = balonEkle("Düşünüyorum...", "asistan");
+
+      try {
+        const yanit = await fetch("/api/sohbet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mesaj: mesaj, gecmis: gecmis.slice(-10) })
+        });
+        const veri = await yanit.json();
+        bekleme.remove();
+
+        if (veri.basari) {
+          balonEkle(veri.cevap, "asistan");
+          gecmis.push({ role: "user", content: mesaj });
+          gecmis.push({ role: "assistant", content: veri.cevap });
+        } else {
+          balonEkle(veri.hata || "Bir sorun oluştu.", "hata");
+        }
+      } catch (hata) {
+        bekleme.remove();
+        balonEkle("Sunucuya ulaşılamadı. Lütfen tekrar dene.", "hata");
+      } finally {
+        sorBtn.disabled = false;
+        mesajGirisi.focus();
+      }
+    }
+
+    async function leadKaydet() {
+      durumMetni.className = "";
+      durumMetni.textContent = "";
+
+      const isim = isimGirisi.value.trim();
+      const telefon = telefonGirisi.value.trim();
+      if (!isim || !telefon) {
+        durumMetni.className = "hata";
+        durumMetni.textContent = "Lütfen isim ve telefon alanlarını doldur.";
+        return;
+      }
+
+      kaydetBtn.disabled = true;
+      try {
+        const yanit = await fetch("/api/leads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isim: isim, telefon: telefon, mesaj: notGirisi.value.trim() })
+        });
+        const veri = await yanit.json();
+
+        if (veri.basari) {
+          durumMetni.className = "basari";
+          durumMetni.textContent = "Teşekkürler! Bilgilerin kaydedildi, sana ulaşacağız.";
+          isimGirisi.value = "";
+          telefonGirisi.value = "";
+          notGirisi.value = "";
+        } else {
+          durumMetni.className = "hata";
+          durumMetni.textContent = veri.hata || "Kayıt yapılamadı.";
+        }
+      } catch (hata) {
+        durumMetni.className = "hata";
+        durumMetni.textContent = "Sunucuya ulaşılamadı. Lütfen tekrar dene.";
+      } finally {
+        kaydetBtn.disabled = false;
+      }
+    }
+
+    sorBtn.addEventListener("click", sohbetGonder);
+    mesajGirisi.addEventListener("keydown", function (olay) {
+      if (olay.key === "Enter") sohbetGonder();
+    });
+    kaydetBtn.addEventListener("click", leadKaydet);
+  </script>
+</body>
+</html>

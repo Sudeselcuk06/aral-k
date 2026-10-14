@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ARALIK — Yönetim Paneli</title>
+  <style>
+    :root {
+      --zemin: #f3f6fa;
+      --kart: #ffffff;
+      --lacivert: #0b1f3a;
+      --vurgu: #ffb703;
+      --metin: #1c2733;
+      --metin-soluk: #637283;
+      --cizgi: #dfe6ee;
+      --hata: #c0392b;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; background: var(--zemin); color: var(--metin); }
+    header.ust { background: var(--lacivert); color: #fff; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .logo { font-weight: 800; letter-spacing: 3px; font-size: 22px; }
+    .logo span { color: var(--vurgu); }
+    .sayfa { max-width: 1000px; margin: 0 auto; padding: 24px 16px 48px; }
+
+    .ozet { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .ozet h1 { margin: 0; font-size: 22px; }
+    #toplamMetni { color: var(--metin-soluk); }
+    button { padding: 10px 18px; border: 0; border-radius: 10px; background: var(--vurgu); color: #1b1b1b; font: inherit; font-weight: 700; cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: wait; }
+
+    .tablo-kutu { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 14px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 560px; }
+    /* F deseni: en önemli sütun (isim) en solda */
+    th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--cizgi); vertical-align: top; }
+    th { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--metin-soluk); background: #fafcfe; }
+    td.isim { font-weight: 700; }
+    tr:last-child td { border-bottom: 0; }
+    td.mesaj { color: var(--metin-soluk); max-width: 340px; word-wrap: break-word; }
+
+    #durumMetni { padding: 28px 16px; text-align: center; color: var(--metin-soluk); }
+    #durumMetni.hata { color: var(--hata); }
+  </style>
+</head>
+<body>
+  <header class="ust">
+    <div class="logo">ARA<span>L</span>IK <small style="font-weight:400;letter-spacing:0;font-size:14px;opacity:.8">· Yönetim Paneli</small></div>
+  </header>
+
+  <main class="sayfa">
+    <div class="ozet">
+      <div>
+        <h1>Gelen Başvurular</h1>
+        <div id="toplamMetni">Yükleniyor...</div>
+      </div>
+      <button id="yenileBtn" type="button">Yenile</button>
+    </div>
+
+    <div class="tablo-kutu">
+      <table>
+        <thead>
+          <tr><th>İsim</th><th>Telefon</th><th>Mesaj</th><th>Tarih</th></tr>
+        </thead>
+        <tbody id="leadGovdesi"></tbody>
+      </table>
+      <div id="durumMetni" role="status"></div>
+    </div>
+  </main>
+
+  <script>
+    const leadGovdesi = document.getElementById("leadGovdesi");
+    const durumMetni = document.getElementById("durumMetni");
+    const toplamMetni = document.getElementById("toplamMetni");
+    const yenileBtn = document.getElementById("yenileBtn");
+
+    // Veritabanı saati UTC tutar; ekranda kullanıcının yerel saatine çeviriyoruz.
+    function tarihYaz(tarih) {
+      const d = new Date(String(tarih).replace(" ", "T") + "Z");
+      return isNaN(d) ? tarih : d.toLocaleString("tr-TR");
+    }
+
+    function hucre(metin, sinif) {
+      const td = document.createElement("td");
+      if (sinif) td.className = sinif;
+      td.textContent = metin || "-"; // textContent: ziyaretçinin yazdığı metin HTML olarak çalışmaz (XSS koruması)
+      return td;
+    }
+
+    async function leadleriYukle() {
+      yenileBtn.disabled = true;
+      durumMetni.className = "";
+      durumMetni.textContent = "";
+      try {
+        const yanit = await fetch("/api/leads");
+        const veri = await yanit.json();
+        if (!veri.basari) throw new Error(veri.hata || "Kayıtlar alınamadı.");
+
+        leadGovdesi.replaceChildren();
+        veri.leads.forEach(function (lead) {
+          const satir = document.createElement("tr");
+          satir.appendChild(hucre(lead.isim, "isim"));
+          satir.appendChild(hucre(lead.telefon));
+          satir.appendChild(hucre(lead.mesaj, "mesaj"));
+          satir.appendChild(hucre(tarihYaz(lead.tarih)));
+          leadGovdesi.appendChild(satir);
+        });
+
+        toplamMetni.textContent = "Toplam " + veri.toplam + " kayıt";
+        if (veri.toplam === 0) durumMetni.textContent = "Henüz kayıt yok.";
+      } catch (hata) {
+        toplamMetni.textContent = "";
+        durumMetni.className = "hata";
+        durumMetni.textContent = "Kayıtlar yüklenemedi: " + hata.message;
+      } finally {
+        yenileBtn.disabled = false;
+      }
+    }
+
+    yenileBtn.addEventListener("click", leadleriYukle);
+    leadleriYukle();
+  </script>
+</body>
+</html>
